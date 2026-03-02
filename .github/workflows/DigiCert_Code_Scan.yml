@@ -114,24 +114,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      ACTIONS_STEP_DEBUG: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Install Trivy (pinned + checksum verified)
+        env:
+          TRIVY_VERSION: "0.69.1"
+        run: |
+          set -euo pipefail
+          curl -fsSLo trivy.tar.gz "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSLo trivy_checksums.txt "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_checksums.txt"
+          sha256sum -c <(grep "trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" trivy_checksums.txt)
+          tar -xzf trivy.tar.gz trivy
+          sudo install -m 0755 trivy /usr/local/bin/trivy
+          trivy --version
+
       - name: Run Trivy to generate SBOM
         uses: aquasecurity/trivy-action@0.34.1
         with:
+          skip-setup-trivy: true
           scan-type: 'fs'
           format: 'cyclonedx'
           output: 'sbom-cdxgen.cyclonedx.json'
-          version: 'v0.69.1'
-          token-setup-trivy: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cdxgen
-          path: |
-            sbom-cdxgen.cyclonedx.json
+          path: sbom-cdxgen.cyclonedx.json
