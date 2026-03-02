@@ -122,7 +122,7 @@ jobs:
           scan-type: 'fs'
           format: 'cyclonedx'
           output: 'sbom-cdxgen.cyclonedx.json'
-          version: '0.69.1'
+          version: 'v0.69.1'
           token-setup-trivy: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload SBOM as artifact
